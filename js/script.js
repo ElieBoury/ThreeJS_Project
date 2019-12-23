@@ -16,7 +16,8 @@ const Scene = {
         raycaster: new THREE.Raycaster(),
         animSpeed: null,
         animPercent: 0.00,
-        text: "DAWIN"
+        text: "DAWIN",
+        signText: "Pass on me !",
     },
     animate: () => {
         requestAnimationFrame(Scene.animate);
@@ -44,7 +45,56 @@ const Scene = {
             // }
         }
 
+        if (Scene.vars.goldGroup !== undefined) {
+            let intersects = Scene.vars.raycaster.intersectObjects(Scene.vars.goldGroup.children, true);
+
+            if (intersects.length > 0) {
+                Scene.vars.animSpeed = 0.05;
+            } else {
+                Scene.vars.animSpeed = -0.05;
+            }
+
+            // let mouse = new THREE.Vector3(Scene.vars.mouse.x, Scene.vars.mouse.y, 0);
+            // mouse.unproject(Scene.vars.camera);
+
+            // let ray = new THREE.Raycaster(Scene.vars.camera.position, mouse.sub(Scene.vars.camera.position).normalize());
+            // let intersects = ray.intersectObjects(Scene.vars.goldGroup.children, true);
+            // if(intersects.length > 0) {
+            // 	var arrow = new THREE.ArrowHelper(ray.ray.direction, ray.ray.origin, 1000, 0xFF00000);
+            // 	Scene.vars.scene.add(arrow);
+            // }
+        }
+
+        if(Scene.vars.sign !== undefined) {
+            let intersects = Scene.vars.raycaster.intersectObjects(Scene.vars.sign.children, true);
+
+            if (intersects.length > 0) {
+                Scene.changeColor();
+            } else {
+                // console.log(Scene.vars.goldGroup);
+            }
+        }
+
         Scene.render();
+    },
+    changeColor: () => {
+        Scene.vars.goldGroup.children[2].traverse(node => {
+            if (node.isMesh) {
+                node.material = new THREE.MeshStandardMaterial({
+                    color: new THREE.Color(Scene.getRandomColor()),
+                    metalness: .6,
+                    roughness: .3
+                })
+            }
+        });
+    },
+    getRandomColor: () => {
+        var letters = '0123456789ABCDEF';
+        var color = '#';
+        for (var i = 0; i < 6; i++) {
+            color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
     },
     render: () => {
         Scene.vars.renderer.render(Scene.vars.scene, Scene.vars.camera);
@@ -152,13 +202,28 @@ const Scene = {
         }
 
         loader.load('./vendor/three.js-master/examples/fonts/helvetiker_regular.typeface.json', (font) => {
-            let geometry = new THREE.TextGeometry(text, {
-                font,
-                size: 1,
-                height: 0.1,
-                curveSegments: 1,
-                bevelEnabled: false
-            });
+
+            let geometry;
+
+            if(text === "DAWIN") {
+                geometry = new THREE.TextGeometry(text, {
+                    font,
+                    size: 1,
+                    height: 0.1,
+                    curveSegments: 1,
+                    bevelEnabled: false
+                });
+            } else {
+                geometry = new THREE.TextGeometry(text, {
+                    font,
+                    size: 0.35,
+                    height: 0.1,
+                    curveSegments: 1,
+                    bevelEnabled: false
+                });
+            }
+
+
 
             geometry.computeBoundingBox();
             let offset = geometry.boundingBox.getCenter().negate();
@@ -321,63 +386,70 @@ const Scene = {
                     Scene.loadFBX("Socle_Partie2.FBX", 10, [0, 0, 0], [0, 0, 0], 0x1A1A1A, 'socle2', () => {
                         Scene.loadFBX("Plaquette.FBX", 10, [0, 4, 45], [0, 0, 0], 0xFFFFFF, 'plaquette', () => {
                             Scene.loadText(Scene.vars.text, 10, [0, 23, 52], [0, 0, 0], 0x1A1A1A, "texte", () => {
-                                Scene.loadFBX("PanneauSimple.FBX", 10, [60, 22, 0], [0, 0, 0], 0xFFFFFF, 'sign', () => {
-                                    let vars = Scene.vars;
+                                Scene.loadText(Scene.vars.signText, 10, [2, 213.5, -50], [0, 0, 0], 0x1A1A1A, "signText", () => {
+                                    Scene.loadFBX("PanneauSimple.FBX", 18, [0, 180, -55], [0, 0, 0], 0xFFFFFF, 'sign', () => {
+                                        let vars = Scene.vars;
 
-                                    let gold = new THREE.Group();
-                                    gold.add(vars.socle1);
-                                    gold.add(vars.socle2);
-                                    gold.add(vars.statuette);
-                                    gold.add(vars.logo);
-                                    gold.add(vars.texte);
-                                    gold.add(vars.plaquette);
+                                        let gold = new THREE.Group();
+                                        gold.add(vars.socle1);
+                                        gold.add(vars.socle2);
+                                        gold.add(vars.statuette);
+                                        gold.add(vars.logo);
+                                        gold.add(vars.texte);
+                                        gold.add(vars.plaquette);
 
-                                    let logo2 = vars.logo.clone();
-                                    logo2.rotation.z = Math.PI;
-                                    logo2.position.x = -45;
-                                    vars.logo2 = logo2;
-                                    gold.add(logo2);
-                                    gold.position.z = -50;
-                                    gold.position.y = 10;
-                                    vars.scene.add(gold);
-                                    vars.goldGroup = gold;
+                                        let logo2 = vars.logo.clone();
+                                        logo2.rotation.z = Math.PI;
+                                        logo2.position.x = -45;
+                                        vars.logo2 = logo2;
+                                        gold.add(logo2);
+                                        gold.position.z = -50;
+                                        gold.position.y = 10;
+                                        vars.scene.add(gold);
+                                        vars.goldGroup = gold;
 
-                                    let silver = gold.clone();
-                                    silver.position.set(-200, 10, 0);
-                                    silver.rotation.y = Math.PI / 4;
-                                    silver.children[2].traverse(node => {
-                                        if (node.isMesh) {
-                                            node.material = new THREE.MeshStandardMaterial({
-                                                color: new THREE.Color(0xC0C0C0),
-                                                metalness: .6,
-                                                roughness: .3
-                                            })
-                                        }
+                                        let silver = gold.clone();
+                                        silver.position.set(-200, 10, 0);
+                                        silver.rotation.y = Math.PI / 4;
+                                        silver.children[2].traverse(node => {
+                                            if (node.isMesh) {
+                                                node.material = new THREE.MeshStandardMaterial({
+                                                    color: new THREE.Color(0xC0C0C0),
+                                                    metalness: .6,
+                                                    roughness: .3
+                                                })
+                                            }
+                                        });
+                                        vars.scene.add(silver);
+                                        vars.silverGroup = silver;
+
+                                        let bronze = gold.clone();
+                                        bronze.position.set(200, 10, 0);
+                                        bronze.rotation.y = -Math.PI / 4;
+                                        bronze.children[2].traverse(node => {
+                                            if (node.isMesh) {
+                                                node.material = new THREE.MeshStandardMaterial({
+                                                    color: new THREE.Color(0xCD7F32),
+                                                    metalness: .6,
+                                                    roughness: .3
+                                                })
+                                            }
+                                        });
+                                        vars.scene.add(bronze);
+                                        vars.bronzeGroup = bronze;
+
+
+                                        vars.scene.add(vars.sign);
+                                        vars.scene.add(vars.signText);
+
+                                        /*let signGroup = new THREE.Group();
+                                        signGroup.add(vars.silver);
+                                        signGroup.add(vars.signText);
+                                        vars.scene.add(signGroup);*/
+
+                                        let elem = document.querySelector('#loading');
+                                        elem.parentNode.removeChild(elem);
                                     });
-                                    vars.scene.add(silver);
-                                    vars.silverGroup = silver;
-
-                                    let bronze = gold.clone();
-                                    bronze.position.set(200, 10, 0);
-                                    bronze.rotation.y = -Math.PI / 4;
-                                    bronze.children[2].traverse(node => {
-                                        if (node.isMesh) {
-                                            node.material = new THREE.MeshStandardMaterial({
-                                                color: new THREE.Color(0xCD7F32),
-                                                metalness: .6,
-                                                roughness: .3
-                                            })
-                                        }
-                                    });
-                                    vars.scene.add(bronze);
-                                    vars.bronzeGroup = bronze;
-
-                                    let signGroup = new THREE.Group();
-                                    signGroup.add(vars.sign);
-                                    vars.scene.add();
-
-                                    let elem = document.querySelector('#loading');
-                                    elem.parentNode.removeChild(elem);
                                 });
                             });
                         });
